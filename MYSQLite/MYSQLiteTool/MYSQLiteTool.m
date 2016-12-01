@@ -104,6 +104,14 @@ static MYSQLiteTool *sharedInstance = nil;
 }
 
 #pragma mark -
+#pragma mark - 指定数据库中 清理数据
+- (void)DataBase:(FMDatabase *)db clearDataForTable:(NSString *)tableName {
+    if ([self isOpenDatabese:db]) {
+        [db executeUpdate:[NSString stringWithFormat:@"DELETE FROM %@", tableName]];
+    }
+}
+
+#pragma mark -
 #pragma mark - 给指定数据库的表 更新值
 - (void)DataBase:(FMDatabase *)db table:(NSString *)tableName updateKeyValues:(NSDictionary *)keyValues {
     if ([self isOpenDatabese:db]) {
@@ -137,6 +145,36 @@ static MYSQLiteTool *sharedInstance = nil;
 - (NSArray *)DataBase:(FMDatabase *)db table:(NSString *)tableName selectKeyTypes:(NSDictionary *)keyTypes whereCondition:(NSDictionary *)condition {
     if ([self isOpenDatabese:db]) {
         FMResultSet *result =  [db executeQuery:[NSString stringWithFormat:@"SELECT * FROM %@ WHERE %@ = ? LIMIT 10", tableName, condition.allKeys[0]], condition[condition.allKeys[0]]];
+        return [self getArrayWithFMResultSet:result keyTypes:keyTypes];
+    }
+    return nil;
+}
+
+#pragma mark -
+#pragma mark - 模糊查询 - 字符串为前缀的字段
+- (NSArray *)DataBase:(FMDatabase *)db table:(NSString *)tableName selectKeyTypes:(NSDictionary *)keyTypes whereKey:(NSString *)key beginStr:(NSString *)beginStr {
+    if ([self isOpenDatabese:db]) {
+        FMResultSet *result = [db executeQuery:[NSString stringWithFormat:@"SELECT * FROM %@ WHERE %@ LIKE '%@%%' LIMIT 10", tableName, key, beginStr]];
+        return [self getArrayWithFMResultSet:result keyTypes:keyTypes];
+    }
+    return nil;
+}
+
+#pragma mark -
+#pragma mark - 模糊查询 - 字符串为包含的字段
+- (NSArray *)DataBase:(FMDatabase *)db table:(NSString *)tableName selectKeyTypes:(NSDictionary *)keyTypes whereKey:(NSString *)key containStr:(NSString *)containStr {
+    if ([self isOpenDatabese:db]) {
+        FMResultSet *result = [db executeQuery:[NSString stringWithFormat:@"SELECT * FROM %@ WHERE %@ LIKE '%%%@%%' LIMIT 10", tableName, key, containStr]];
+        return [self getArrayWithFMResultSet:result keyTypes:keyTypes];
+    }
+    return nil;
+}
+
+#pragma mark -
+#pragma mark - 模糊查询 - 字符串为后缀的字段
+- (NSArray *)DataBase:(FMDatabase *)db table:(NSString *)tableName selectKeyTypes:(NSDictionary *)keyTypes whereKey:(NSString *)key endStr:(NSString *)endStr {
+    if ([self isOpenDatabese:db]) {
+        FMResultSet *result = [db executeQuery:[NSString stringWithFormat:@"SELECT * FROM %@ WHERE %@ LIKE '%%%@' LIMIT 10", tableName, key, endStr]];
         return [self getArrayWithFMResultSet:result keyTypes:keyTypes];
     }
     return nil;
